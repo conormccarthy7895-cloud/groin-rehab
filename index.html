@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Groin Rehab Planner</title>
+  <style>
+    /* ===== RESET & BASE ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --pitch:   #22c55e;
+      --pitch-bg:#dcfce7;
+      --gym:     #3b82f6;
+      --gym-bg:  #dbeafe;
+      --recover: #f59e0b;
+      --recover-bg:#fef9c3;
+      --rest:    #9ca3af;
+      --rest-bg: #f3f4f6;
+      --accent:  #6366f1;
+      --accent-dark:#4338ca;
+      --bg:      #f9fafb;
+      --card:    #ffffff;
+      --text:    #1f2937;
+      --muted:   #6b7280;
+      --border:  #e5e7eb;
+      --radius:  12px;
+      --shadow:  0 2px 8px rgba(0,0,0,.08);
+    }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    /* ===== HEADER ===== */
+    header {
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+      color: #fff; padding: 1.25rem 2rem; display: flex; align-items: center; gap: 1rem;
+      box-shadow: 0 2px 10px rgba(99,102,241,.3);
+    }
+    header h1 { font-size: 1.4rem; font-weight: 700; }
+    header .subtitle { font-size:.82rem; opacity:.85; }
+    .badge {
+      background: rgba(255,255,255,.2); border-radius: 20px; padding: .2rem .75rem;
+      font-size: .75rem; margin-left: auto; white-space: nowrap;
+    }
+
+    /* ===== NAV ===== */
+    nav { background: var(--card); border-bottom: 1px solid var(--border); display: flex; gap:.25rem; padding: .5rem 1.5rem; }
+    nav button {
+      background: none; border: none; cursor: pointer; padding: .45rem 1rem;
+      border-radius: 8px; font-size: .88rem; font-weight: 500; color: var(--muted);
+      transition: background .15s, color .15s;
+    }
+    nav button.active, nav button:hover { background: var(--accent); color: #fff; }
+
+    /* ===== MAIN ===== */
+    main { max-width: 1000px; margin: 2rem auto; padding: 0 1.25rem 4rem; }
+
+    /* ===== SECTION TITLES ===== */
+    .section-title { font-size: 1.3rem; font-weight: 700; margin-bottom: 1.25rem; }
+    .section-sub { color: var(--muted); font-size: .88rem; margin-top: .25rem; }
+
+    /* ===== CARDS ===== */
+    .card { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 1.5rem; margin-bottom: 1.25rem; }
+
+    /* ===== FORM ===== */
+    .form-group { margin-bottom: 1.25rem; }
+    label { display: block; font-weight: 600; font-size: .88rem; margin-bottom: .45rem; }
+    input[type="number"] {
+      width: 120px; padding: .5rem .75rem; border: 1.5px solid var(--border);
+      border-radius: 8px; font-size: .95rem; outline: none;
+      transition: border-color .15s;
+    }
+    input[type="number"]:focus { border-color: var(--accent); }
+
+    /* Day selector */
+    .day-selector { display: flex; gap: .4rem; flex-wrap: wrap; }
+    .day-btn {
+      width: 42px; height: 42px; border-radius: 50%; border: 2px solid var(--border);
+      background: var(--card); font-weight: 700; font-size: .82rem; cursor: pointer;
+      transition: all .15s; display: flex; align-items: center; justify-content: center;
+    }
+    .day-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .day-btn.pitch   { background: var(--pitch);   border-color: var(--pitch);   color: #fff; }
+    .day-btn.gym     { background: var(--gym);     border-color: var(--gym);     color: #fff; }
+    .day-btn.recover { background: var(--recover); border-color: var(--recover); color: #fff; }
+
+    /* Legend */
+    .legend { display: flex; gap: 1rem; flex-wrap: wrap; font-size:.8rem; margin-bottom: 1rem; }
+    .legend-item { display: flex; align-items: center; gap: .35rem; }
+    .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+    .dot-pitch   { background: var(--pitch); }
+    .dot-gym     { background: var(--gym); }
+    .dot-recover { background: var(--recover); }
+    .dot-rest    { background: var(--rest); }
+
+    /* ===== PRIMARY BUTTON ===== */
+    .btn-primary {
+      background: var(--accent); color: #fff; border: none; border-radius: 10px;
+      padding: .7rem 2rem; font-size: 1rem; font-weight: 600; cursor: pointer;
+      transition: background .15s, transform .1s; display: inline-block;
+    }
+    .btn-primary:hover { background: var(--accent-dark); transform: translateY(-1px); }
+    .btn-secondary {
+      background: var(--bg); color: var(--text); border: 1.5px solid var(--border);
+      border-radius: 10px; padding: .55rem 1.25rem; font-size: .88rem;
+      font-weight: 600; cursor: pointer; transition: background .15s;
+    }
+    .btn-secondary:hover { background: var(--border); }
+
+    /* ===== WEEKLY CALENDAR ===== */
+    .week-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: .65rem; }
+    @media(max-width: 640px) { .week-grid { grid-template-columns: repeat(4, 1fr); } }
+    .day-card {
+      border-radius: var(--radius); padding: 1rem .75rem; text-align: center;
+      cursor: pointer; transition: transform .15s, box-shadow .15s; border: 2px solid transparent;
+      min-height: 110px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .4rem;
+    }
+    .day-card:hover { transform: translateY(-3px); box-shadow: 0 6px 18px rgba(0,0,0,.12); }
+    .day-card .day-name { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; opacity: .7; }
+    .day-card .day-icon { font-size: 1.6rem; }
+    .day-card .day-type { font-size: .72rem; font-weight: 700; margin-top: .15rem; }
+    .day-card .day-progress { font-size: .68rem; opacity: .75; margin-top: .25rem; }
+    .day-card .progress-bar-wrap { width: 100%; height: 5px; background: rgba(0,0,0,.1); border-radius: 99px; margin-top: .4rem; overflow: hidden; }
+    .day-card .progress-bar-fill { height: 100%; border-radius: 99px; background: rgba(0,0,0,.25); transition: width .4s; }
+
+    .day-card.pitch   { background: var(--pitch-bg);   border-color: var(--pitch); }
+    .day-card.gym     { background: var(--gym-bg);     border-color: var(--gym); }
+    .day-card.recover { background: var(--recover-bg); border-color: var(--recover); }
+    .day-card.rest    { background: var(--rest-bg);    border-color: var(--rest); }
+
+    /* ===== NUTRITION ROW ===== */
+    .nutrition-row { display: flex; gap: .75rem; margin-top: .85rem; flex-wrap: wrap; }
+    .nutr-badge {
+      flex: 1 1 80px; background: var(--bg); border-radius: 8px; padding: .55rem .75rem;
+      text-align: center; border: 1px solid var(--border);
+    }
+    .nutr-badge .val { font-size: 1.1rem; font-weight: 700; }
+    .nutr-badge .unit { font-size: .68rem; color: var(--muted); }
+
+    /* ===== DAILY VIEW ===== */
+    #back-btn { display: flex; align-items: center; gap: .4rem; margin-bottom: 1rem; }
+    .daily-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .daily-type-pill {
+      border-radius: 20px; padding: .3rem 1rem; font-size: .85rem; font-weight: 700; color: #fff;
+    }
+    .daily-type-pill.pitch   { background: var(--pitch); }
+    .daily-type-pill.gym     { background: var(--gym); }
+    .daily-type-pill.recover { background: var(--recover); }
+    .daily-type-pill.rest    { background: var(--rest); }
+
+    /* Exercise checklist */
+    .exercise-list { list-style: none; }
+    .exercise-item {
+      display: flex; align-items: flex-start; gap: .85rem; padding: .85rem 0;
+      border-bottom: 1px solid var(--border); transition: opacity .2s;
+    }
+    .exercise-item:last-child { border-bottom: none; }
+    .exercise-item.done { opacity: .55; }
+    .exercise-item.done .ex-name { text-decoration: line-through; }
+
+    /* Custom checkbox */
+    .ex-check {
+      width: 22px; height: 22px; min-width: 22px; border-radius: 6px;
+      border: 2px solid var(--border); cursor: pointer; display: flex;
+      align-items: center; justify-content: center; background: var(--card);
+      transition: background .15s, border-color .15s; margin-top: 1px;
+    }
+    .ex-check.checked { background: var(--accent); border-color: var(--accent); }
+    .ex-check.checked::after { content: '✓'; color: #fff; font-size: .82rem; font-weight: 700; }
+
+    .ex-body { flex: 1; }
+    .ex-name { font-weight: 600; font-size: .95rem; }
+    .ex-dose { font-size: .8rem; color: var(--muted); margin-top: .15rem; }
+    .ex-cue  { font-size: .77rem; color: var(--accent); margin-top: .2rem; font-style: italic; }
+
+    /* Progress ring */
+    .progress-ring-wrap { display: flex; flex-direction: column; align-items: center; gap: .5rem; }
+    .progress-ring-label { font-size: .85rem; color: var(--muted); font-weight: 600; }
+    .progress-ring-num { font-size: 1.3rem; font-weight: 700; }
+
+    /* ===== NUTRITION PANEL ===== */
+    .nutr-card { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 1.25rem; }
+    .nutr-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: .75rem; margin-top: 1rem; }
+    .nutr-tile {
+      background: var(--bg); border-radius: 10px; padding: .85rem; text-align: center;
+      border: 1px solid var(--border);
+    }
+    .nutr-tile .nt-icon { font-size: 1.4rem; }
+    .nutr-tile .nt-val  { font-size: 1.25rem; font-weight: 800; margin-top: .2rem; }
+    .nutr-tile .nt-lbl  { font-size: .72rem; color: var(--muted); margin-top: .1rem; }
+
+    /* ===== TOAST ===== */
+    #toast {
+      position: fixed; bottom: 1.5rem; right: 1.5rem; background: #1f2937; color: #fff;
+      padding: .65rem 1.25rem; border-radius: 10px; font-size: .88rem; font-weight: 500;
+      opacity: 0; pointer-events: none; transition: opacity .3s; z-index: 9999;
+    }
+    #toast.show { opacity: 1; }
+
+    /* ===== UTIL ===== */
+    .hidden { display: none !important; }
+    .row { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
+    .mt-1 { margin-top: .75rem; }
+    .mt-2 { margin-top: 1.5rem; }
+    select {
+      padding: .5rem .75rem; border: 1.5px solid var(--border); border-radius: 8px;
+      font-size: .95rem; background: var(--card); outline: none; cursor: pointer;
+    }
+    select:focus { border-color: var(--accent); }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>💪 Groin Rehab Planner</h1>
+    <div class="subtitle">Conor McCarthy – Post Bilateral Groin Repair &amp; Neurolysis</div>
+  </div>
+  <div class="badge" id="header-badge">Setup Required</div>
+</header>
+
+<nav>
+  <button id="nav-setup"    class="active"  onclick="showPage('setup')">⚙️ Setup</button>
+  <button id="nav-week"                     onclick="showPage('week')">📅 Weekly Schedule</button>
+  <button id="nav-daily"    class="hidden"  onclick="showPage('daily')">📋 Today's Rehab</button>
+  <button id="nav-nutrition"                onclick="showPage('nutrition')">🥗 Nutrition</button>
+</nav>
+
+<main>
+
+  <!-- =================== SETUP PAGE =================== -->
+  <section id="page-setup">
+    <div class="section-title">Weekly Setup
+      <p class="section-sub">Tell me about this week and I'll build your personalised schedule.</p>
+    </div>
+
+    <div class="card">
+      <div class="form-group">
+        <label>👤 Gender</label>
+        <select id="setup-gender">
+          <option value="male">Male</option>
+          <option value="female">Female</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>⚖️ Body Mass (kg)</label>
+        <input type="number" id="setup-weight" value="85" min="40" max="180" />
+      </div>
+
+      <div class="form-group">
+        <label>🟢 Pitch Session Days</label>
+        <div class="day-selector" id="sel-pitch"></div>
+      </div>
+
+      <div class="form-group mt-1">
+        <label>🔵 Gym Session Days</label>
+        <div class="day-selector" id="sel-gym"></div>
+      </div>
+
+      <div class="form-group mt-1">
+        <label>🟡 Active Recovery Days</label>
+        <div class="day-selector" id="sel-recover"></div>
+      </div>
+
+      <button class="btn-primary mt-2" onclick="generateWeek()">Generate My Week →</button>
+    </div>
+
+    <div class="card">
+      <div style="font-weight:700; margin-bottom:.5rem;">Legend</div>
+      <div class="legend">
+        <div class="legend-item"><span class="dot dot-pitch"></span> Pitch Session</div>
+        <div class="legend-item"><span class="dot dot-gym"></span> Gym Session</div>
+        <div class="legend-item"><span class="dot dot-recover"></span> Active Recovery</div>
+        <div class="legend-item"><span class="dot dot-rest"></span> Rest</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =================== WEEK PAGE =================== -->
+  <section id="page-week" class="hidden">
+    <div class="section-title">📅 This Week's Schedule
+      <p class="section-sub">Click any day to open your daily rehab checklist.</p>
+    </div>
+    <div class="legend" style="margin-bottom:1rem;">
+      <div class="legend-item"><span class="dot dot-pitch"></span> Pitch</div>
+      <div class="legend-item"><span class="dot dot-gym"></span> Gym</div>
+      <div class="legend-item"><span class="dot dot-recover"></span> Recovery</div>
+      <div class="legend-item"><span class="dot dot-rest"></span> Rest</div>
+    </div>
+    <div class="week-grid" id="week-grid"></div>
+
+    <div class="card mt-2">
+      <div style="font-weight:700; margin-bottom:.75rem;">📊 Week Summary</div>
+      <div id="week-summary"></div>
+    </div>
+
+    <button class="btn-secondary mt-2" onclick="showPage('setup')">← Edit Setup</button>
+  </section>
+
+  <!-- =================== DAILY PAGE =================== -->
+  <section id="page-daily" class="hidden">
+    <button class="btn-secondary" id="back-btn" onclick="showPage('week')">← Back to Week</button>
+
+    <div class="daily-header">
+      <div>
+        <div class="section-title" id="daily-title">Monday Rehab</div>
+        <div class="section-sub" id="daily-date"></div>
+      </div>
+      <span class="daily-type-pill" id="daily-pill">Pitch</span>
+    </div>
+
+    <!-- Progress ring -->
+    <div class="card" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
+      <div>
+        <div style="font-weight:700; font-size:1rem;">Daily Progress</div>
+        <div id="progress-text" style="color:var(--muted); font-size:.85rem; margin-top:.25rem;">0 of 8 exercises completed</div>
+      </div>
+      <div style="width:100%; max-width:360px;">
+        <div class="progress-bar-wrap" style="height:12px; border-radius:99px; background: var(--border);">
+          <div id="progress-bar" class="progress-bar-fill" style="width:0%; height:12px; border-radius:99px; background: var(--accent);"></div>
+        </div>
+      </div>
+      <button class="btn-secondary" onclick="resetDay()">Reset</button>
+    </div>
+
+    <!-- Exercise list -->
+    <div class="card">
+      <div style="font-weight:700; margin-bottom:1rem;">🏋️ Daily Rehab Exercises</div>
+      <ul class="exercise-list" id="exercise-list"></ul>
+    </div>
+
+    <!-- Session-specific extras -->
+    <div class="card" id="session-extras" class="hidden">
+      <div style="font-weight:700; margin-bottom:.75rem;" id="extras-title">Session Reminders</div>
+      <div id="extras-body"></div>
+    </div>
+
+    <!-- Nutrition for the day -->
+    <div class="nutr-card mt-2">
+      <div style="font-weight:700; margin-bottom:.25rem;">🥗 Nutrition Targets Today</div>
+      <div style="font-size:.8rem; color:var(--muted);" id="nutr-day-note">Based on your body mass and session type</div>
+      <div class="nutr-grid" id="daily-nutr"></div>
+    </div>
+  </section>
+
+  <!-- =================== NUTRITION PAGE =================== -->
+  <section id="page-nutrition" class="hidden">
+    <div class="section-title">🥗 Nutrition Guide
+      <p class="section-sub">Targets based on your gender and body mass – adjusted by session type.</p>
+    </div>
+
+    <div id="nutr-profile-banner" class="card" style="background: linear-gradient(135deg,#6366f1,#4338ca); color:#fff;">
+      <div style="font-size:1rem; font-weight:700;" id="nutr-profile-text">Profile not set yet</div>
+      <div style="font-size:.8rem; opacity:.85; margin-top:.3rem;">Adjust in Setup</div>
+    </div>
+
+    <div id="nutr-tables"></div>
+  </section>
+
+</main>
+
+<div id="toast">✓ Progress saved!</div>
+
+<script>
+/* ===========================
+   DATA
+=========================== */
+const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const DAY_FULL = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+const DAY_ICONS = { pitch:'⚽', gym:'🏋️', recover:'🧘', rest:'😴' };
+const DAY_LABELS = { pitch:'Pitch', gym:'Gym', recover:'Recovery', rest:'Rest' };
+
+const EXERCISES = [
+  {
+    id: 'hip90',
+    name: '90/90 Hip / Pigeon Stretch',
+    dose: '2 × 40s each side',
+    cue: 'Keep ribs stacked over pelvis – don\'t crank the low back.',
+    category: 'Mobility'
+  },
+  {
+    id: 'hipflex',
+    name: 'Split-Kneeling Hip Flexor Inner-Range Lifts (Left Focus)',
+    dose: '2 × 12 reps – slow, controlled',
+    cue: 'Control glute and low abs. Feel the left hip flexor working.',
+    category: 'Hip Control'
+  },
+  {
+    id: 'bridge',
+    name: 'Supine Banded Single-Leg Glute Bridge (Knee In/Out)',
+    dose: '2 × 8 each side',
+    cue: 'Glute + adductor sharing load. Pelvis level, trunk quiet.',
+    category: 'Hip Control'
+  },
+  {
+    id: 'deadbug',
+    name: 'Banded Deadbugs (90/90 Position)',
+    dose: '2 × 5–6 each side – 3–4s holds',
+    cue: 'Ribs down, low abs on. No groin gripping. Breathe through it.',
+    category: 'Trunk'
+  },
+  {
+    id: 'addiso',
+    name: 'Side-Lying Short-Lever Adductor Isometrics',
+    dose: '3 × 30–45s holds each side. Pain ≤3/10.',
+    cue: '45° hip flexion to start. Gradually work toward more extension over weeks.',
+    category: 'Adductor'
+  },
+  {
+    id: 'leglow',
+    name: 'Low-Ab Leg Lowering (Seated Alt Leg Drops)',
+    dose: '2–3 sets – comfortable fatigue, no pubic pain',
+    cue: 'Keep lower back flat. No gripping sensation. Stop if pubic pain >3/10.',
+    category: 'Trunk'
+  },
+  {
+    id: 'chain',
+    name: 'Foot-Anchor & Chain Rotation Mini-Block',
+    dose: '3–5 minutes continuous',
+    cue: 'Find full-foot pressure (inside ball of foot). Let hip rotate over anchored foot. Trunk quiet and stacked.',
+    category: 'Coordination'
+  },
+  {
+    id: 'thorac',
+    name: 'Thoracic Rotation + Breathing Reset',
+    dose: '2 × 8 each side – slow and deliberate',
+    cue: '4s inhale through nose, 6s exhale. Let ribs drop down and in. Side-lying open books or light cable rotation.',
+    category: 'Mobility'
+  }
+];
+
+// Session-specific extras
+const SESSION_EXTRAS = {
+  pitch: {
+    title: '⚽ Pitch Day Reminders',
+    items: [
+      'Complete full daily rehab BEFORE your session, ideally 90+ mins prior.',
+      'Pain rules: ≤3/10 during session – not rapidly changing. Stop any drill that spikes to >4–5/10.',
+      'Next morning check: symptoms should be back to baseline within 24h.',
+      'Re-hydrate well after – target 500ml in first 30 mins post session.',
+      'Ice groin 10–15 mins if there is any flare after session.',
+    ]
+  },
+  gym: {
+    title: '🏋️ Gym Day Reminders',
+    items: [
+      'Run your full AM rehab mini-block before heading to the gym.',
+      'Warm-up: 5 mins hip activation + 3 plyo activation exercises before lifting.',
+      'Key cues all session: full-foot pressure, quiet trunk, yield before explode.',
+      'Short-lever adductor work: if next-day pain increases → trim the sets, not the exercise.',
+      'Bike conditioning after – keeps aerobic system primed without joint load.',
+    ]
+  },
+  recover: {
+    title: '🧘 Recovery Day Reminders',
+    items: [
+      'This day is an investment – protect it.',
+      'Daily rehab still applies – keep it gentle and deliberate.',
+      'Light swim, walk, or bike Erg (aerobic only, no sprints).',
+      'Soft tissue work: foam roll quads/TFL/glutes 10 mins.',
+      'Prioritise sleep quality and nutrition (protein targets still apply).',
+    ]
+  },
+  rest: {
+    title: '😴 Rest Day Reminders',
+    items: [
+      'Daily rehab AM + PM micro-dose still applies (10–15 mins).',
+      'This is your rebuild day – tissue adapts at rest, not during load.',
+      'Aim for 8h sleep. Dark room, no screens 30 mins before bed.',
+      'Light walk is fine – avoid sitting for >90 mins at a stretch.',
+      'Check in: any new patterns of pain? If yes, log and flag to physio.',
+    ]
+  }
+};
+
+/* ===========================
+   STATE
+=========================== */
+let state = loadState();
+
+function loadState() {
+  try {
+    const s = localStorage.getItem('groinRehabState');
+    if (s) return JSON.parse(s);
+  } catch(e){}
+  return {
+    gender: 'male',
+    weight: 85,
+    days: { Mon:'rest', Tue:'rest', Wed:'rest', Thu:'rest', Fri:'rest', Sat:'rest', Sun:'rest' },
+    checked: {},  // { 'Mon_hip90': true, ... }
+    generated: false,
+    activeDay: null,
+    weekStart: weekStartStr()
+  };
+}
+
+function saveState() {
+  localStorage.setItem('groinRehabState', JSON.stringify(state));
+}
+
+function weekStartStr() {
+  const now = new Date();
+  const day = now.getDay(); // 0 = Sun
+  const diff = (day === 0) ? -6 : 1 - day;
+  const mon = new Date(now);
+  mon.setDate(now.getDate() + diff);
+  return mon.toISOString().slice(0, 10);
+}
+
+/* ===========================
+   SETUP PAGE
+=========================== */
+function buildDaySelectors() {
+  ['pitch', 'gym', 'recover'].forEach(type => {
+    const el = document.getElementById(`sel-${type}`);
+    el.innerHTML = '';
+    DAYS.forEach(d => {
+      const btn = document.createElement('button');
+      btn.className = 'day-btn' + (state.days[d] === type ? ` ${type}` : '');
+      btn.textContent = d;
+      btn.dataset.day = d;
+      btn.dataset.type = type;
+      btn.onclick = () => toggleDay(d, type, btn);
+      el.appendChild(btn);
+    });
+  });
+  document.getElementById('setup-gender').value = state.gender;
+  document.getElementById('setup-weight').value  = state.weight;
+}
+
+function toggleDay(day, type, btn) {
+  if (state.days[day] === type) {
+    state.days[day] = 'rest';
+    btn.className = 'day-btn';
+  } else {
+    state.days[day] = type;
+    // De-select from other selectors
+    ['pitch','gym','recover'].forEach(t => {
+      if (t !== type) {
+        const otherBtns = document.querySelectorAll(`#sel-${t} .day-btn[data-day="${day}"]`);
+        otherBtns.forEach(b => b.className = 'day-btn');
+      }
+    });
+    btn.className = `day-btn ${type}`;
+  }
+  saveState();
+}
+
+function generateWeek() {
+  state.gender = document.getElementById('setup-gender').value;
+  state.weight  = parseFloat(document.getElementById('setup-weight').value) || 85;
+  state.generated = true;
+
+  // Reset checked for new week if week changed
+  const ws = weekStartStr();
+  if (state.weekStart !== ws) {
+    state.checked = {};
+    state.weekStart = ws;
+  }
+
+  saveState();
+  buildWeekGrid();
+  showPage('week');
+}
+
+/* ===========================
+   WEEK GRID
+=========================== */
+function buildWeekGrid() {
+  const grid = document.getElementById('week-grid');
+  grid.innerHTML = '';
+
+  DAYS.forEach((d, i) => {
+    const type = state.days[d];
+    const exKeys = EXERCISES.map(e => `${d}_${e.id}`);
+    const done = exKeys.filter(k => state.checked[k]).length;
+    const total = EXERCISES.length;
+    const pct = Math.round((done / total) * 100);
+
+    const card = document.createElement('div');
+    card.className = `day-card ${type}`;
+    card.onclick = () => openDay(i);
+    card.innerHTML = `
+      <div class="day-name">${DAY_FULL[i]}</div>
+      <div class="day-icon">${DAY_ICONS[type]}</div>
+      <div style="font-size:1rem; font-weight:800;">${d}</div>
+      <div class="day-type">${DAY_LABELS[type]}</div>
+      <div class="day-progress">${done}/${total} done</div>
+      <div class="progress-bar-wrap" style="width:100%; margin-top:.35rem;">
+        <div class="progress-bar-fill" style="width:${pct}%;"></div>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+
+  // Summary
+  const counts = { pitch: 0, gym: 0, recover: 0, rest: 0 };
+  DAYS.forEach(d => counts[state.days[d]]++);
+  const totalDone = Object.keys(state.checked).filter(k => state.checked[k]).length;
+  const totalEx   = DAYS.length * EXERCISES.length;
+  document.getElementById('week-summary').innerHTML = `
+    <div style="display:flex; gap:1rem; flex-wrap:wrap; font-size:.88rem;">
+      <div>⚽ <b>${counts.pitch}</b> pitch days</div>
+      <div>🏋️ <b>${counts.gym}</b> gym days</div>
+      <div>🧘 <b>${counts.recover}</b> recovery days</div>
+      <div>😴 <b>${counts.rest}</b> rest days</div>
+      <div style="margin-left:auto; color:var(--accent);">✅ <b>${totalDone}/${totalEx}</b> exercises this week</div>
+    </div>
+  `;
+
+  // Header badge
+  document.getElementById('header-badge').textContent = `Week of ${state.weekStart}`;
+}
+
+/* ===========================
+   DAILY PAGE
+=========================== */
+function openDay(dayIdx) {
+  state.activeDay = dayIdx;
+  saveState();
+
+  const d = DAYS[dayIdx];
+  const full = DAY_FULL[dayIdx];
+  const type = state.days[d];
+
+  document.getElementById('daily-title').textContent = `${full} – ${DAY_LABELS[type]} Day`;
+  document.getElementById('daily-date').textContent = `Week starting ${state.weekStart}`;
+
+  const pill = document.getElementById('daily-pill');
+  pill.textContent = DAY_LABELS[type];
+  pill.className = `daily-type-pill ${type}`;
+
+  buildExerciseList(d);
+  buildSessionExtras(type);
+  buildDailyNutrition(type);
+  updateProgress(d);
+
+  document.getElementById('nav-daily').classList.remove('hidden');
+  showPage('daily');
+}
+
+function buildExerciseList(d) {
+  const ul = document.getElementById('exercise-list');
+  ul.innerHTML = '';
+  EXERCISES.forEach(ex => {
+    const key = `${d}_${ex.id}`;
+    const isDone = !!state.checked[key];
+
+    const li = document.createElement('li');
+    li.className = `exercise-item${isDone ? ' done' : ''}`;
+    li.dataset.key = key;
+
+    li.innerHTML = `
+      <div class="ex-check${isDone ? ' checked' : ''}" onclick="toggleExercise('${key}', '${d}')"></div>
+      <div class="ex-body">
+        <div class="ex-name">${ex.name}</div>
+        <div class="ex-dose">${ex.dose}</div>
+        <div class="ex-cue">💡 ${ex.cue}</div>
+      </div>
+    `;
+    ul.appendChild(li);
+  });
+}
+
+function toggleExercise(key, d) {
+  state.checked[key] = !state.checked[key];
+  saveState();
+
+  const li = document.querySelector(`[data-key="${key}"]`);
+  if (li) {
+    li.classList.toggle('done', state.checked[key]);
+    const chk = li.querySelector('.ex-check');
+    chk.classList.toggle('checked', state.checked[key]);
+  }
+
+  updateProgress(d);
+  buildWeekGridSilent();
+  showToast(state.checked[key] ? '✓ Exercise completed!' : 'Exercise unchecked');
+}
+
+function updateProgress(d) {
+  const total = EXERCISES.length;
+  const done = EXERCISES.filter(e => state.checked[`${d}_${e.id}`]).length;
+  const pct = Math.round((done / total) * 100);
+  document.getElementById('progress-text').textContent = `${done} of ${total} exercises completed`;
+  document.getElementById('progress-bar').style.width = `${pct}%`;
+}
+
+function resetDay() {
+  const d = DAYS[state.activeDay];
+  EXERCISES.forEach(e => { state.checked[`${d}_${e.id}`] = false; });
+  saveState();
+  buildExerciseList(d);
+  updateProgress(d);
+  buildWeekGridSilent();
+  showToast('Day reset');
+}
+
+function buildSessionExtras(type) {
+  const extras = SESSION_EXTRAS[type];
+  document.getElementById('extras-title').textContent = extras.title;
+  document.getElementById('extras-body').innerHTML = `<ul style="list-style:none;">` +
+    extras.items.map(i => `<li style="padding:.4rem 0; border-bottom:1px solid var(--border); font-size:.88rem;">• ${i}</li>`).join('') +
+    `</ul>`;
+}
+
+/* ===========================
+   NUTRITION
+=========================== */
+function calcNutrition(type) {
+  const kg = state.weight || 85;
+  const male = state.gender === 'male';
+
+  // Basal targets
+  let protein, carbs, fats, calories;
+
+  // Training days need more fuel
+  if (type === 'pitch') {
+    calories = male ? Math.round(35 * kg + 600) : Math.round(32 * kg + 500);
+    protein  = Math.round(2.2 * kg);
+    carbs    = Math.round(7   * kg);
+    fats     = Math.round(1.1 * kg);
+  } else if (type === 'gym') {
+    calories = male ? Math.round(35 * kg + 400) : Math.round(32 * kg + 350);
+    protein  = Math.round(2.2 * kg);
+    carbs    = Math.round(5.5 * kg);
+    fats     = Math.round(1.1 * kg);
+  } else if (type === 'recover') {
+    calories = male ? Math.round(30 * kg + 200) : Math.round(28 * kg + 150);
+    protein  = Math.round(2.0 * kg);
+    carbs    = Math.round(4   * kg);
+    fats     = Math.round(1.2 * kg);
+  } else {
+    calories = male ? Math.round(28 * kg + 100) : Math.round(26 * kg + 80);
+    protein  = Math.round(1.8 * kg);
+    carbs    = Math.round(3   * kg);
+    fats     = Math.round(1.2 * kg);
+  }
+
+  const water = Math.round(0.04 * kg * 1000); // ml/kg ~40ml
+  return { calories, protein, carbs, fats, water: Math.round(water / 100) / 10 };
+}
+
+function buildDailyNutrition(type) {
+  const n = calcNutrition(type);
+  document.getElementById('nutr-day-note').textContent =
+    `${state.gender === 'male' ? 'Male' : 'Female'}, ${state.weight}kg – ${DAY_LABELS[type]} Day`;
+  document.getElementById('daily-nutr').innerHTML = `
+    <div class="nutr-tile"><div class="nt-icon">🔥</div><div class="nt-val">${n.calories}</div><div class="nt-lbl">Calories (kcal)</div></div>
+    <div class="nutr-tile"><div class="nt-icon">🥩</div><div class="nt-val">${n.protein}g</div><div class="nt-lbl">Protein</div></div>
+    <div class="nutr-tile"><div class="nt-icon">🍚</div><div class="nt-val">${n.carbs}g</div><div class="nt-lbl">Carbohydrates</div></div>
+    <div class="nutr-tile"><div class="nt-icon">🥑</div><div class="nt-val">${n.fats}g</div><div class="nt-lbl">Healthy Fats</div></div>
+    <div class="nutr-tile"><div class="nt-icon">💧</div><div class="nt-val">${n.water}L</div><div class="nt-lbl">Water Target</div></div>
+  `;
+}
+
+function buildNutritionPage() {
+  const kg = state.weight || 85;
+  document.getElementById('nutr-profile-text').textContent =
+    `${state.gender === 'male' ? '♂ Male' : '♀ Female'} · ${kg} kg`;
+
+  const types = ['pitch','gym','recover','rest'];
+  let html = '';
+  types.forEach(type => {
+    const n = calcNutrition(type);
+    html += `
+      <div class="card">
+        <div style="display:flex; align-items:center; gap:.6rem; margin-bottom:.75rem;">
+          <span style="font-size:1.3rem;">${DAY_ICONS[type]}</span>
+          <span style="font-weight:700;">${DAY_LABELS[type]} Day Targets</span>
+        </div>
+        <div class="nutr-grid">
+          <div class="nutr-tile"><div class="nt-icon">🔥</div><div class="nt-val">${n.calories}</div><div class="nt-lbl">Calories (kcal)</div></div>
+          <div class="nutr-tile"><div class="nt-icon">🥩</div><div class="nt-val">${n.protein}g</div><div class="nt-lbl">Protein</div></div>
+          <div class="nutr-tile"><div class="nt-icon">🍚</div><div class="nt-val">${n.carbs}g</div><div class="nt-lbl">Carbs</div></div>
+          <div class="nutr-tile"><div class="nt-icon">🥑</div><div class="nt-val">${n.fats}g</div><div class="nt-lbl">Fats</div></div>
+          <div class="nutr-tile"><div class="nt-icon">💧</div><div class="nt-val">${n.water}L</div><div class="nt-lbl">Water</div></div>
+        </div>
+        <div style="font-size:.75rem; color:var(--muted); margin-top:.75rem;">
+          Timing tip: ${type === 'pitch' ? '🍚 Load carbs 2–3h pre-session. Protein within 30 mins post-match.' :
+                        type === 'gym'   ? '🥩 Protein + small carb snack 90 mins pre-lift. Protein shake within 30 mins post.' :
+                        type === 'recover' ? '🥗 Focus on anti-inflammatory foods today: berries, oily fish, leafy greens.' :
+                        '😴 Casein protein (cottage cheese / Greek yogurt) before bed supports overnight repair.'}
+        </div>
+      </div>`;
+  });
+
+  // Collagen note
+  html += `
+    <div class="card" style="background: #faf5ff; border:1.5px solid #d8b4fe;">
+      <div style="font-weight:700; margin-bottom:.5rem;">💊 Supplement Note</div>
+      <div style="font-size:.88rem; line-height:1.6;">
+        For post-groin surgery / tendon rehab, evidence supports:<br>
+        <ul style="margin:.5rem 0 0 1rem; font-size:.85rem; line-height:1.8;">
+          <li><b>Collagen peptides:</b> 15g taken 30–60 mins before your rehab session, alongside Vitamin C (500mg). Supports tendon/fascial healing.</li>
+          <li><b>Creatine Monohydrate:</b> 3–5g/day. Supports strength maintenance and lean mass during rehab.</li>
+          <li><b>Omega-3 (Fish Oil):</b> 2–3g EPA/DHA daily. Anti-inflammatory support for nerve and tissue recovery.</li>
+          <li><b>Vitamin D3:</b> 2000–4000 IU/day (especially important in Ireland October–April). Bone and immune health.</li>
+        </ul>
+        <div style="margin-top:.5rem; color:var(--muted);">Always confirm supplements with your physio/surgeon.</div>
+      </div>
+    </div>`;
+
+  document.getElementById('nutr-tables').innerHTML = html;
+}
+
+/* ===========================
+   PAGE NAVIGATION
+=========================== */
+const PAGES = ['setup', 'week', 'daily', 'nutrition'];
+
+function showPage(page) {
+  PAGES.forEach(p => {
+    document.getElementById(`page-${p}`).classList.toggle('hidden', p !== page);
+    const btn = document.getElementById(`nav-${p}`);
+    if (btn) btn.classList.toggle('active', p === page);
+  });
+
+  if (page === 'week') {
+    if (state.generated) buildWeekGrid();
+  }
+  if (page === 'nutrition') {
+    buildNutritionPage();
+  }
+  if (page === 'setup') {
+    buildDaySelectors();
+  }
+}
+
+function buildWeekGridSilent() {
+  if (state.generated) buildWeekGrid();
+}
+
+/* ===========================
+   TOAST
+=========================== */
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+/* ===========================
+   INIT
+=========================== */
+function init() {
+  // Reset checked if new week
+  const ws = weekStartStr();
+  if (state.weekStart !== ws) {
+    state.checked = {};
+    state.weekStart = ws;
+    saveState();
+  }
+
+  buildDaySelectors();
+
+  if (state.generated) {
+    document.getElementById('header-badge').textContent = `Week of ${state.weekStart}`;
+    // Default show week view if already set up
+    showPage('week');
+  }
+}
+
+init();
+</script>
+</body>
+</html>
